@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReFlow — Smart Food Waste Reduction System</title>
+  <meta name="description" content="AI-powered surplus food redistribution platform connecting restaurants, canteens, and NGOs to reduce food waste." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --emerald-400: #34d399; --emerald-500: #10b981; --emerald-600: #059669; --emerald-700: #047857; --emerald-800: #065f46;
+      --teal-400: #2dd4bf; --teal-500: #14b8a6; --teal-600: #0d9488;
+      --amber-400: #fbbf24; --amber-500: #f59e0b; --amber-600: #d97706;
+      --red-400: #f87171; --red-500: #ef4444;
+      --indigo-400: #818cf8; --indigo-500: #6366f1;
+
+      --bg-body: #f0fdf4;
+      --bg-page: #f8fdfb;
+      --bg-card: rgba(255, 255, 255, 0.65);
+      --bg-card-solid: #ffffff;
+      --bg-elevated: rgba(255, 255, 255, 0.8);
+      --bg-inset: rgba(0, 0, 0, 0.03);
+      --bg-input: rgba(255, 255, 255, 0.7);
+
+      --glass-bg: rgba(255, 255, 255, 0.55);
+      --glass-border: rgba(16, 185, 129, 0.15);
+      --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --text-faint: #94a3b8;
+
+      --border-light: rgba(16, 185, 129, 0.12);
+      --border-faint: rgba(0, 0, 0, 0.06);
+
+      --radius-lg: 20px; --radius-md: 14px; --radius-sm: 10px; --radius-pill: 9999px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-body); color: var(--text-primary);
+      line-height: 1.6; overflow-x: hidden; min-height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--emerald-500); border-radius: 10px; }
+
+    /* ===== BACKGROUND SCENE ===== */
+    .bg-scene { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .bg-orb {
+      position: absolute; border-radius: 50%; filter: blur(120px);
+      animation: orbFloat 20s ease-in-out infinite;
+    }
+    .bg-orb-1 { width: 700px; height: 700px; background: #a7f3d0; top: -250px; left: -200px; opacity: 0.45; animation-delay: 0s; }
+    .bg-orb-2 { width: 500px; height: 500px; background: #99f6e4; bottom: -150px; right: -150px; opacity: 0.35; animation-delay: -7s; }
+    .bg-orb-3 { width: 450px; height: 450px; background: #fde68a; top: 35%; left: 55%; opacity: 0.2; animation-delay: -14s; }
+    .bg-orb-4 { width: 350px; height: 350px; background: #c7d2fe; top: 65%; left: 5%; opacity: 0.2; animation-delay: -5s; }
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -20px) scale(1.05); }
+      66% { transform: translate(-20px, 15px) scale(0.95); }
+    }
+    .bg-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(16,185,129,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16,185,129,0.05) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 70%);
+    }
+
+    /* ===== UTILITY ===== */
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+    @media (min-width: 768px) { .container { padding: 0 32px; } }
+
+    /* ===== GLASS ===== */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(1.6);
+      -webkit-backdrop-filter: blur(20px) saturate(1.6);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px) saturate(1.4);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 4px 24px rgba(16, 185, 129, 0.04), 0 1px 3px rgba(0,0,0,0.03);
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .glass-card:hover {
+      border-color: rgba(16,185,129,0.28);
+      box-shadow: 0 12px 40px rgba(16, 185, 129, 0.08), 0 4px 12px rgba(0,0,0,0.04);
+      transform: translateY(-4px);
+    }
+    .glass-strong {
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(30px) saturate(1.6);
+      -webkit-backdrop-filter: blur(30px) saturate(1.6);
+      border: 1px solid rgba(16,185,129,0.15);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    }
+    .glass-input {
+      background: var(--bg-input);
+      border: 1.5px solid var(--border-faint);
+      border-radius: var(--radius-sm);
+      padding: 11px 16px; width: 100%;
+      color: var(--text-primary); font-size: 0.875rem;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .glass-input::placeholder { color: var(--text-faint); }
+    .glass-input:focus {
+      outline: none; border-color: var(--emerald-500);
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.12), inset 0 1px 3px rgba(0,0,0,0.04);
+      background: #fff;
+    }
+    select.glass-input {
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23059669' viewBox='0 0 16 16'%3E%3Cpath d='M8 12L2 5h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+    }
+    select.glass-input option { background: #fff; color: #1e293b; }
+
+    /* ===== BUTTONS ===== */
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 28px; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--emerald-600), var(--emerald-500));
+      color: white; font-weight: 700; font-size: 0.875rem;
+      border: none; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(16,185,129,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+      transition: all 0.3s ease; position: relative; overflow: hidden;
+    }
+    .btn-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(16,185,129,0.4); }
+    .btn-primary:hover::before { opacity: 1; }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-claim {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      flex: 1; padding: 10px 16px; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--emerald-600), var(--emerald-500));
+      color: white; font-weight: 700; font-size: 0.8rem;
+      border: none; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(16,185,129,0.2);
+      transition: all 0.3s ease;
+    }
+    .btn-claim:hover { box-shadow: 0 6px 24px rgba(16,185,129,0.35); transform: translateY(-1px); }
+    .btn-claim.claimed {
+      background: rgba(99,102,241,0.1); color: var(--indigo-500);
+      box-shadow: none; cursor: default; border: 1px solid rgba(99,102,241,0.2);
+    }
+    .btn-claim:disabled { background: rgba(0,0,0,0.04); color: var(--text-faint); box-shadow: none; cursor: not-allowed; border: 1px solid var(--border-faint); }
+
+    /* ===== BADGES ===== */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: var(--radius-pill);
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+    }
+    .badge-veg { background: rgba(16,185,129,0.1); color: var(--emerald-700); border: 1px solid rgba(16,185,129,0.2); }
+    .badge-nonveg { background: rgba(239,68,68,0.08); color: var(--red-500); border: 1px solid rgba(239,68,68,0.15); }
+    .badge-bakery { background: rgba(251,191,36,0.12); color: var(--amber-600); border: 1px solid rgba(251,191,36,0.25); }
+    .badge-urgent { background: rgba(239,68,68,0.1); color: var(--red-500); border: 1px solid rgba(239,68,68,0.18); }
+    .badge-claimed { background: rgba(99,102,241,0.1); color: var(--indigo-500); border: 1px solid rgba(99,102,241,0.18); }
+
+    /* ===== SECTION ===== */
+    .section { padding: 40px 0; position: relative; z-index: 1; }
+    .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+    .section-icon {
+      width: 44px; height: 44px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .section-icon i { width: 20px; height: 20px; color: white; }
+    .section-icon.emerald { background: linear-gradient(135deg, var(--emerald-600), var(--teal-500)); box-shadow: 0 4px 16px rgba(16,185,129,0.25); }
+    .section-icon.amber { background: linear-gradient(135deg, var(--amber-500), #f97316); box-shadow: 0 4px 16px rgba(251,191,36,0.25); }
+    .section-icon.teal { background: linear-gradient(135deg, var(--teal-500), var(--emerald-500)); box-shadow: 0 4px 16px rgba(20,184,166,0.25); }
+    .section-title { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
+    .section-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ===== HEADER ===== */
+    .header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(240, 253, 244, 0.75);
+      backdrop-filter: blur(24px) saturate(1.5);
+      -webkit-backdrop-filter: blur(24px) saturate(1.5);
+      border-bottom: 1px solid rgba(16,185,129,0.1);
+      box-shadow: 0 1px 12px rgba(0,0,0,0.03);
+    }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--emerald-500), var(--teal-500));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+    }
+    .logo-text { font-size: 1.35rem; font-weight: 900; letter-spacing: -0.03em; }
+    .logo-accent { background: linear-gradient(135deg, var(--emerald-600), var(--teal-600)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo-white { color: var(--text-primary); }
+    .logo-sub { font-size: 0.55rem; color: var(--text-faint); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin-top: -2px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .sync-badge { display: none; align-items: center; gap: 8px; padding: 6px 14px; border-radius: var(--radius-pill); }
+    @media (min-width: 640px) { .sync-badge { display: flex; } }
+    .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald-500); position: relative; }
+    .pulse-dot::after {
+      content: ''; position: absolute; inset: -3px; border-radius: 50%;
+      background: var(--emerald-500); opacity: 0;
+      animation: pulseRing 2s ease-out infinite;
+    }
+    @keyframes pulseRing { 0% { opacity: 0.4; transform: scale(1); } 100% { opacity: 0; transform: scale(2.2); } }
+    .live-dot-mobile { display: flex; }
+    @media (min-width: 640px) { .live-dot-mobile { display: none; } }
+
+    /* ===== METRICS ===== */
+    .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (min-width: 768px) { .metrics-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
+    .metric-card { padding: 20px; border-radius: var(--radius-lg); position: relative; overflow: hidden; }
+    .metric-card::before {
+      content: ''; position: absolute; top: -20px; right: -20px; width: 100px; height: 100px;
+      border-radius: 50%; filter: blur(40px);
+    }
+    .metric-card.emerald::before { background: var(--emerald-400); opacity: 0.15; }
+    .metric-card.teal::before { background: var(--teal-400); opacity: 0.15; }
+    .metric-card.amber::before { background: var(--amber-400); opacity: 0.15; }
+    .metric-icon-wrap {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+    }
+    .metric-icon-wrap.emerald { background: rgba(16,185,129,0.12); }
+    .metric-icon-wrap.teal { background: rgba(20,184,166,0.12); }
+    .metric-icon-wrap.amber { background: rgba(251,191,36,0.12); }
+    .metric-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 6px; }
+    .metric-value { font-size: 1.75rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1; color: var(--text-primary); }
+    @media (min-width: 768px) { .metric-value { font-size: 2.2rem; } }
+    .metric-sub { font-size: 0.7rem; font-weight: 600; margin-top: 6px; }
+    .metric-sub.emerald { color: var(--emerald-600); }
+    .metric-sub.teal { color: var(--teal-600); }
+    .metric-sub.amber { color: var(--amber-600); }
+
+    /* ===== FORM ===== */
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 1024px) { .form-grid { grid-template-columns: 1fr 1fr 1fr; } }
+    .form-group label {
+      display: block; font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 7px;
+    }
+    .form-group label .req { color: var(--emerald-600); }
+    .form-row { display: flex; gap: 8px; }
+    .form-full { grid-column: 1 / -1; }
+    .form-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-top: 8px; }
+    .form-success { display: none; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--emerald-600); }
+    .form-success.show { display: flex; }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .filter-pill {
+      padding: 7px 16px; border-radius: var(--radius-pill);
+      font-size: 0.75rem; font-weight: 600;
+      background: rgba(255,255,255,0.5); border: 1px solid var(--border-faint);
+      color: var(--text-muted); cursor: pointer; transition: all 0.3s ease;
+    }
+    .filter-pill:hover { border-color: rgba(16,185,129,0.3); color: var(--text-secondary); background: rgba(255,255,255,0.8); }
+    .filter-pill.active {
+      background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.35);
+      color: var(--emerald-700); box-shadow: 0 0 16px rgba(16,185,129,0.06);
+    }
+
+    /* ===== FEED GRID ===== */
+    .feed-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 640px) { .feed-grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 1024px) { .feed-grid { grid-template-columns: repeat(3, 1fr); } }
+    .food-card { padding: 22px; display: flex; flex-direction: column; }
+    .food-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .food-card-title { font-size: 1rem; font-weight: 800; color: var(--text-primary); line-height: 1.3; }
+    .food-card-org { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; display: flex; align-items: center; gap: 5px; }
+    .food-card-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .food-card-info {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      background: var(--bg-inset); border: 1px solid var(--border-faint); margin-bottom: 14px;
+    }
+    .food-card-info-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+    .food-card-addr { font-size: 0.72rem; color: var(--text-faint); display: flex; align-items: center; gap: 5px; margin-bottom: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .food-card-actions { display: flex; gap: 8px; margin-top: auto; }
+    .food-card-map-btn {
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius-sm); background: transparent;
+      border: 1px solid var(--border-faint); color: var(--text-muted);
+      cursor: pointer; transition: all 0.3s; flex-shrink: 0;
+    }
+    .food-card-map-btn:hover { border-color: rgba(16,185,129,0.3); color: var(--emerald-600); background: rgba(16,185,129,0.04); }
+
+    /* Countdown */
+    .countdown { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700; }
+    .countdown.normal { color: var(--emerald-600); }
+    .countdown.urgent { color: var(--red-500); animation: blink 1s ease-in-out infinite; }
+    .countdown.expired { color: var(--text-faint); }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .feed-empty { text-align: center; padding: 60px 20px; border-radius: var(--radius-lg); }
+
+    /* ===== DISPATCH TABLE ===== */
+    .dispatch-wrap { border-radius: var(--radius-lg); overflow: hidden; }
+    .dispatch-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .dispatch-table th {
+      text-align: left; padding: 14px 18px;
+      background: rgba(16,185,129,0.06);
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--emerald-700);
+    }
+    .dispatch-table td { padding: 14px 18px; border-bottom: 1px solid var(--border-faint); vertical-align: middle; }
+    .dispatch-table tr:hover td { background: rgba(16,185,129,0.03); }
+    .dispatch-batch { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: var(--emerald-600); }
+    .dispatch-food-title { font-weight: 700; color: var(--text-primary); font-size: 0.85rem; }
+    .dispatch-food-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+    .dispatch-name { font-weight: 600; color: var(--text-primary); font-size: 0.85rem; }
+    .dispatch-org { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+    .dispatch-vehicle { font-size: 0.8rem; color: var(--text-secondary); }
+    .dispatch-status { font-size: 0.8rem; font-weight: 600; }
+    .btn-qr {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 14px; border-radius: var(--radius-sm);
+      background: transparent; border: 1px solid rgba(251,191,36,0.25);
+      color: var(--amber-600); font-size: 0.72rem; font-weight: 700;
+      cursor: pointer; transition: all 0.3s;
+    }
+    .btn-qr:hover { border-color: rgba(251,191,36,0.5); background: rgba(251,191,36,0.05); }
+    .hide-mobile { display: none; }
+    @media (min-width: 640px) { .hide-mobile { display: table-cell; } }
+    .hide-tablet { display: none; }
+    @media (min-width: 768px) { .hide-tablet { display: table-cell; } }
+    .dispatch-empty { text-align: center; padding: 48px 20px; color: var(--text-faint); }
+
+    /* ===== MODALS ===== */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      display: none; align-items: center; justify-content: center; padding: 20px;
+      background: rgba(0,0,0,0.25); backdrop-filter: blur(8px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal { width: 100%; border-radius: var(--radius-lg); padding: 28px; position: relative; }
+    .modal-gps { max-width: 520px; }
+    .modal-qr { max-width: 420px; }
+    .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--text-muted); cursor: pointer; transition: color 0.2s; padding: 4px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-title { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .modal-title h3 { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+    @keyframes modalPop { from { opacity: 0; transform: scale(0.93) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .modal.open { animation: modalPop 0.35s cubic-bezier(0.16,1,0.3,1); }
+
+    /* Route visual */
+    .route-visual { display: flex; align-items: flex-start; gap: 14px; }
+    .route-line { display: flex; flex-direction: column; align-items: center; gap: 3px; padding-top: 4px; }
+    .route-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .route-dot.pickup { background: var(--emerald-500); box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+    .route-dot.drop { background: var(--amber-500); box-shadow: 0 0 8px rgba(251,191,36,0.4); }
+    .route-stem { width: 2px; height: 42px; background: linear-gradient(to bottom, var(--emerald-500), var(--amber-500)); border-radius: 2px; }
+    .route-points { flex: 1; display: flex; flex-direction: column; gap: 18px; }
+    .route-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+    .route-label.pickup { color: var(--emerald-600); }
+    .route-label.drop { color: var(--amber-600); }
+    .route-place { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); }
+    .route-addr { font-size: 0.75rem; color: var(--text-muted); }
+
+    .map-sim {
+      border-radius: var(--radius-md); overflow: hidden; margin-top: 16px;
+      border: 1px solid var(--border-faint); position: relative;
+      height: 200px; background: #f0fdf8;
+    }
+    .map-overlay { position: absolute; bottom: 10px; left: 10px; padding: 6px 12px; border-radius: var(--radius-sm); font-size: 0.75rem; }
+    .map-stat-val { font-weight: 700; }
+    .map-stat-val.emerald { color: var(--emerald-600); }
+
+    .route-stats { display: flex; gap: 8px; margin-top: 14px; }
+    .route-stat-card { flex: 1; text-align: center; padding: 10px; border-radius: var(--radius-sm); background: var(--bg-inset); border: 1px solid var(--border-faint); }
+    .route-stat-label { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); }
+    .route-stat-value { font-size: 0.85rem; font-weight: 800; margin-top: 4px; color: var(--text-primary); }
+
+    /* QR */
+    .qr-container { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 24px; border-radius: var(--radius-md); background: var(--bg-inset); border: 1px solid var(--border-faint); }
+    .qr-frame { padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.8); border: 1px solid rgba(16,185,129,0.1); }
+    .qr-grid { display: grid; grid-template-columns: repeat(21, 1fr); width: 150px; height: 150px; }
+    .qr-pass-id { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--emerald-700); letter-spacing: 0.08em; }
+    .qr-pass-label { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-faint); }
+    .qr-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-top: 4px; }
+    .qr-detail { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--bg-inset); border: 1px solid var(--border-faint); }
+    .qr-detail.full { grid-column: 1 / -1; }
+    .qr-detail-label { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-bottom: 3px; }
+    .qr-detail-value { font-size: 0.82rem; font-weight: 700; color: var(--text-primary); }
+    .qr-verified {
+      display: flex; align-items: center; gap: 7px; width: 100%; margin-top: 4px;
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      border: 1px solid rgba(16,185,129,0.15); background: rgba(16,185,129,0.04);
+      font-size: 0.75rem; font-weight: 600; color: var(--emerald-700);
+    }
+
+    /* ===== TOAST ===== */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 110; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      padding: 12px 18px; border-radius: var(--radius-sm);
+      font-size: 0.82rem; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+      animation: slideInRight 0.35s cubic-bezier(0.16,1,0.3,1); transition: all 0.3s;
+    }
+    .toast.success { color: var(--emerald-700); border: 1px solid rgba(16,185,129,0.2); background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    .toast.info { color: var(--amber-600); border: 1px solid rgba(251,191,36,0.2); background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* ===== FOOTER ===== */
+    .footer { padding: 32px 0; border-top: 1px solid var(--border-faint); position: relative; z-index: 1; margin-top: 20px; }
+    .footer-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    @media (min-width: 640px) { .footer-inner { flex-direction: row; justify-content: space-between; } }
+    .footer-copy { font-size: 0.72rem; color: var(--text-faint); text-align: center; }
+    .footer-links { display: flex; gap: 16px; }
+    .footer-links a { color: var(--text-faint); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--emerald-600); }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .anim-up { opacity: 0; animation: slideUp 0.55s cubic-bezier(0.16,1,0.3,1) forwards; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-scene" aria-hidden="true">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-orb bg-orb-4"></div>
+    <div class="bg-grid"></div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header" id="main-header">
+    <div class="container header-inner">
+      <div class="logo">
+        <div class="logo-icon"><i data-lucide="leaf" style="width:20px;height:20px;color:#fff"></i></div>
+        <div>
+          <div class="logo-text"><span class="logo-accent">Re</span><span class="logo-white">Flow</span></div>
+          <div class="logo-sub">Smart Food Waste Reduction</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="sync-badge glass" style="border-radius:9999px">
+          <div class="pulse-dot"></div>
+          <span style="font-size:0.72rem;font-weight:600;color:var(--emerald-600)">System Active</span>
+          <span style="font-size:0.72rem;color:var(--text-faint)">•</span>
+          <span style="font-size:0.72rem;color:var(--text-secondary)">Real-Time Sync</span>
+        </div>
+        <div class="live-dot-mobile" style="align-items:center;gap:6px;margin-right:4px"><div class="pulse-dot"></div></div>
+        <button class="btn-primary" onclick="document.getElementById('donor-section').scrollIntoView({behavior:'smooth'})" style="padding:10px 20px">
+          <i data-lucide="plus-circle" style="width:16px;height:16px"></i>
+          <span class="hide-mobile" style="display:none">Donate Food</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- METRICS -->
+  <section class="section" id="metrics-section" style="padding-top:32px;padding-bottom:20px">
+    <div class="container">
+      <div class="metrics-grid">
+        <div class="glass-card metric-card emerald anim-up" style="animation-delay:0.1s">
+          <div class="metric-icon-wrap emerald"><i data-lucide="package" style="width:16px;height:16px;color:var(--emerald-600)"></i></div>
+          <div class="metric-label">Meals Rescued</div>
+          <div class="metric-value" id="stat-meals">1,247</div>
+          <div class="metric-sub emerald">kg of food saved</div>
+        </div>
+        <div class="glass-card metric-card teal anim-up" style="animation-delay:0.18s">
+          <div class="metric-icon-wrap teal"><i data-lucide="list-checks" style="width:16px;height:16px;color:var(--teal-600)"></i></div>
+          <div class="metric-label">Active Listings</div>
+          <div class="metric-value" id="stat-listings">0</div>
+          <div class="metric-sub teal">available now</div>
+        </div>
+        <div class="glass-card metric-card amber anim-up" style="animation-delay:0.26s">
+          <div class="metric-icon-wrap amber"><i data-lucide="building-2" style="width:16px;height:16px;color:var(--amber-600)"></i></div>
+          <div class="metric-label">Verified NGOs</div>
+          <div class="metric-value" id="stat-ngos">34</div>
+          <div class="metric-sub amber">connected partners</div>
+        </div>
+        <div class="glass-card metric-card emerald anim-up" style="animation-delay:0.34s">
+          <div class="metric-icon-wrap emerald"><i data-lucide="cloud-off" style="width:16px;height:16px;color:var(--emerald-600)"></i></div>
+          <div class="metric-label">CO₂ Saved</div>
+          <div class="metric-value" id="stat-co2">3,118</div>
+          <div class="metric-sub emerald">kg emissions prevented</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DONOR FORM -->
+  <section class="section" id="donor-section" style="padding-top:20px">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-icon emerald"><i data-lucide="heart-handshake"></i></div>
+        <div><div class="section-title">Add Surplus Food</div><div class="section-subtitle">List your extra food — help feed someone in need</div></div>
+      </div>
+      <form class="glass-card" style="padding:28px" id="donor-form" onsubmit="return handleSubmit(event)">
+        <div class="form-grid">
+          <div class="form-group"><label>Restaurant / Canteen <span class="req">*</span></label><input type="text" id="f-restaurant" class="glass-input" placeholder="e.g. Campus Café" required /></div>
+          <div class="form-group"><label>Food Item <span class="req">*</span></label><input type="text" id="f-item" class="glass-input" placeholder="e.g. Vegetable Biryani" required /></div>
+          <div class="form-group"><label>Quantity <span class="req">*</span></label><div class="form-row"><input type="number" id="f-qty" class="glass-input" placeholder="10" min="0.5" step="0.5" required style="flex:1" /><select id="f-unit" class="glass-input" style="width:110px;flex:none"><option value="kg">kg</option><option value="portions">portions</option></select></div></div>
+          <div class="form-group"><label>Category <span class="req">*</span></label><select id="f-category" class="glass-input" required><option value="veg">🥬 Vegetarian</option><option value="nonveg">🍗 Non-Vegetarian</option><option value="bakery">🍞 Bakery</option></select></div>
+          <div class="form-group"><label>Freshness Window <span class="req">*</span></label><select id="f-expiry" class="glass-input" required><option value="1">1 hour</option><option value="1.5">1.5 hours</option><option value="2">2 hours</option><option value="3" selected>3 hours</option><option value="4">4 hours</option><option value="5">5 hours</option><option value="6">6 hours</option></select></div>
+          <div class="form-group"><label>Contact Phone <span class="req">*</span></label><input type="tel" id="f-phone" class="glass-input" placeholder="+91 98765 43210" required /></div>
+          <div class="form-group form-full"><label>Pickup Address <span class="req">*</span></label><input type="text" id="f-address" class="glass-input" placeholder="Block A, Ground Floor, University Campus, City" required /></div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="submit-btn"><i data-lucide="send" style="width:16px;height:16px"></i>List Surplus Food</button>
+            <div class="form-success" id="form-success"><i data-lucide="check-circle" style="width:16px;height:16px"></i>Food listed successfully!</div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- LIVE FEED -->
+  <section class="section" id="feed-section">
+    <div class="container">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px">
+        <div class="section-header" style="margin-bottom:0">
+          <div class="section-icon teal"><i data-lucide="radio"></i></div>
+          <div><div class="section-title">Live Redistribution Feed</div><div class="section-subtitle">Track, filter, and claim surplus food batches</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:0.75rem">
+          <div class="pulse-dot"></div>
+          <span style="color:var(--emerald-600);font-weight:600">Live</span>
+          <span style="color:var(--text-faint);margin-left:4px" id="feed-count">0 listings</span>
+        </div>
+      </div>
+      <div class="filter-bar" id="filter-bar">
+        <button class="filter-pill active" data-filter="all" onclick="setFilter('all')">All Listings</button>
+        <button class="filter-pill" data-filter="veg" onclick="setFilter('veg')">🟢 Veg Only</button>
+        <button class="filter-pill" data-filter="urgent" onclick="setFilter('urgent')">🔥 Urgent (&lt; 1.5 hr)</button>
+        <button class="filter-pill" data-filter="claimed" onclick="setFilter('claimed')">✅ Claimed</button>
+      </div>
+      <div class="feed-grid" id="feed-grid"></div>
+      <div class="glass-card feed-empty" id="feed-empty" style="display:none">
+        <i data-lucide="inbox" style="width:44px;height:44px;color:var(--text-faint);margin:0 auto 12px"></i>
+        <div style="color:var(--text-muted);font-weight:600">No listings match your filter</div>
+        <div style="color:var(--text-faint);font-size:0.82rem;margin-top:6px">Try a different filter or add surplus food above</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DISPATCH -->
+  <section class="section" id="dispatch-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-icon amber"><i data-lucide="truck"></i></div>
+        <div><div class="section-title">Dispatch Board</div><div class="section-subtitle">Track claimed batches, assigned volunteers & verification passes</div></div>
+      </div>
+      <div class="glass-card dispatch-wrap">
+        <div style="overflow-x:auto">
+          <table class="dispatch-table">
+            <thead><tr><th>Batch ID</th><th>Food Item</th><th class="hide-mobile">Assigned To</th><th class="hide-tablet">Vehicle</th><th>Status</th><th style="text-align:center">Verify</th></tr></thead>
+            <tbody id="dispatch-tbody">
+              <tr id="dispatch-empty-row"><td colspan="6" class="dispatch-empty"><i data-lucide="clipboard-list" style="width:32px;height:32px;margin:0 auto 8px;opacity:0.3;display:block"></i>No dispatches yet — claim food from the live feed</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="logo" style="gap:8px">
+        <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--emerald-600),var(--teal-500));display:flex;align-items:center;justify-content:center"><i data-lucide="leaf" style="width:14px;height:14px;color:#fff"></i></div>
+        <span style="font-size:0.9rem;font-weight:800"><span class="logo-accent">Re</span><span class="logo-white">Flow</span></span>
+      </div>
+      <div class="footer-copy">© 2026 ReFlow — Smart Food Waste Reduction System • Built for Hackathon Demo</div>
+      <div class="footer-links">
+        <a href="#"><i data-lucide="github" style="width:16px;height:16px"></i></a>
+        <a href="#"><i data-lucide="twitter" style="width:16px;height:16px"></i></a>
+        <a href="#"><i data-lucide="globe" style="width:16px;height:16px"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- GPS MODAL -->
+  <div class="modal-overlay" id="gps-modal" onclick="if(event.target===this)closeModal('gps-modal')">
+    <div class="modal glass-strong modal-gps">
+      <button class="modal-close" onclick="closeModal('gps-modal')"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+      <div class="modal-title"><div class="metric-icon-wrap emerald" style="width:34px;height:34px"><i data-lucide="map-pin" style="width:16px;height:16px;color:var(--emerald-600)"></i></div><h3>GPS Route Preview</h3></div>
+      <div id="gps-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- QR MODAL -->
+  <div class="modal-overlay" id="qr-modal" onclick="if(event.target===this)closeModal('qr-modal')">
+    <div class="modal glass-strong modal-qr">
+      <button class="modal-close" onclick="closeModal('qr-modal')"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+      <div class="modal-title"><div class="metric-icon-wrap amber" style="width:34px;height:34px"><i data-lucide="qr-code" style="width:16px;height:16px;color:var(--amber-600)"></i></div><h3>Digital Verification Pass</h3></div>
+      <div id="qr-modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    const NGOS = [
+      { name:'Feeding India Foundation', vol:'Aarav M.', vehicle:'E-Scooter #12' },
+      { name:'Robin Hood Army', vol:'Priya S.', vehicle:'Bike #07' },
+      { name:'Annamrita ISKCON', vol:'Rahul K.', vehicle:'Van #03' },
+      { name:'No Food Waste', vol:'Sneha D.', vehicle:'E-Scooter #21' },
+      { name:'Zomato Feeding India', vol:'Vikram J.', vehicle:'Bike #15' },
+      { name:'Akshaya Patra', vol:'Meera R.', vehicle:'Van #08' },
+      { name:'Rise Against Hunger', vol:'Karan P.', vehicle:'E-Scooter #33' },
+      { name:'The Ugly Indian', vol:'Neha T.', vehicle:'Bike #19' },
+    ];
+    const ADDRS = ['Sector 17, Chandigarh','MG Road, Bengaluru','Connaught Place, Delhi','Koramangala, Bengaluru','Banjara Hills, Hyderabad','Andheri West, Mumbai','Salt Lake, Kolkata','T. Nagar, Chennai'];
+    const ROUTES = ['🟡 Awaiting Pickup','🔵 En Route','🟢 Delivered'];
+    let listings = [], batchId = 1000, filter = 'all', mealsKg = 1247, co2Kg = 3118;
+
+    const SEED = [
+      { rest:'Campus Dhaba', item:'Dal Makhani & Rice', qty:8, unit:'kg', cat:'veg', exp:2, addr:'Block C, University Campus', ph:'+91 98765 00001' },
+      { rest:'Green Leaf Café', item:'Paneer Wrap Combo', qty:15, unit:'portions', cat:'veg', exp:1, addr:'Main Gate, Tech Park', ph:'+91 98765 00002' },
+      { rest:"Baker's Lane", item:'Assorted Pastries & Muffins', qty:5, unit:'kg', cat:'bakery', exp:3, addr:'MG Road, Sector 22', ph:'+91 98765 00003' },
+      { rest:'Spice Junction', item:'Chicken Biryani', qty:12, unit:'kg', cat:'nonveg', exp:1.5, addr:'Food Court, Mall of India', ph:'+91 98765 00004' },
+      { rest:'Fresh Bites', item:'Mixed Veg Pulao', qty:6, unit:'kg', cat:'veg', exp:4, addr:'IT Park, Building 9', ph:'+91 98765 00005' },
+      { rest:'The Rolling Pin', item:'Sourdough Bread Loaves', qty:20, unit:'portions', cat:'bakery', exp:5, addr:'Civil Lines, Near Park', ph:'+91 98765 00006' },
+    ];
+
+    function init() {
+      SEED.forEach(s => {
+        const id = ++batchId, ms = s.exp * 3600000;
+        listings.push({ id, rest:s.rest, item:s.item, qty:s.qty, unit:s.unit, cat:s.cat, addr:s.addr, ph:s.ph, created:Date.now()-Math.random()*ms*0.4, expiryMs:ms, claimed:false, ngo:null, route:null });
+      });
+      render(); stats(); lucide.createIcons();
+      animateVal('stat-meals',0,mealsKg,1100);
+      animateVal('stat-co2',0,co2Kg,1100);
+      animateVal('stat-ngos',0,34,800);
+      setInterval(tickCountdowns,1000);
+    }
+
+    const fmt = n => n.toLocaleString('en-IN');
+    const rem = l => Math.max(0, l.created + l.expiryMs - Date.now());
+    const urgent = l => { const r = rem(l); return r > 0 && r < 5400000; };
+    function fmtTime(ms) {
+      if (ms<=0) return '00:00:00';
+      const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000), s=Math.floor((ms%60000)/1000);
+      return [h,m,s].map(v=>String(v).padStart(2,'0')).join(':');
+    }
+    function catBadge(c) {
+      if (c==='veg') return '<span class="badge badge-veg">🟢 Veg</span>';
+      if (c==='nonveg') return '<span class="badge badge-nonveg">🔴 Non-Veg</span>';
+      return '<span class="badge badge-bakery">🍞 Bakery</span>';
+    }
+
+    function stats() {
+      document.getElementById('stat-listings').textContent = listings.filter(l=>!l.claimed&&rem(l)>0).length;
+      document.getElementById('stat-meals').textContent = fmt(mealsKg);
+      document.getElementById('stat-co2').textContent = fmt(co2Kg);
+      document.getElementById('feed-count').textContent = listings.length+' listing'+(listings.length!==1?'s':'');
+    }
+    function animateVal(id,from,to,dur) {
+      const el=document.getElementById(id),range=to-from,t0=performance.now();
+      (function step(now){ const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3); el.textContent=fmt(Math.round(from+range*e)); if(p<1)requestAnimationFrame(step); })(t0);
+    }
+
+    function setFilter(f) {
+      filter=f;
+      document.querySelectorAll('.filter-pill').forEach(el=>el.classList.toggle('active',el.dataset.filter===f));
+      render();
+    }
+    function filtered() {
+      return listings.filter(l=>{
+        if(filter==='veg') return l.cat==='veg'&&!l.claimed;
+        if(filter==='urgent') return urgent(l)&&!l.claimed;
+        if(filter==='claimed') return l.claimed;
+        return true;
+      });
+    }
+
+    function render() {
+      const grid=document.getElementById('feed-grid'),empty=document.getElementById('feed-empty'),items=filtered();
+      if(!items.length){grid.innerHTML='';empty.style.display='';return;}
+      empty.style.display='none';
+      grid.innerHTML=items.map((l,i)=>{
+        const ms=rem(l),exp=ms<=0&&!l.claimed,urg=urgent(l);
+        const cdClass=exp?'expired':urg?'urgent':'normal', cdText=exp?'EXPIRED':fmtTime(ms);
+        return `
+        <div class="glass-card food-card anim-up" data-id="${l.id}" style="animation-delay:${i*0.06}s">
+          <div class="food-card-header"><div style="min-width:0;flex:1"><div class="food-card-title">${l.item}</div><div class="food-card-org"><i data-lucide="store" style="width:12px;height:12px"></i>${l.rest}</div></div>${l.claimed?'<span class="badge badge-claimed" style="margin-left:8px;flex-shrink:0">✅ Claimed</span>':''}</div>
+          <div class="food-card-badges">${catBadge(l.cat)}${urg&&!l.claimed?'<span class="badge badge-urgent">🔥 Urgent</span>':''}</div>
+          <div class="food-card-info"><div class="food-card-info-item"><i data-lucide="scale" style="width:14px;height:14px;color:var(--text-muted)"></i><span style="color:var(--text-secondary);font-weight:600">${l.qty} ${l.unit}</span></div><div class="food-card-info-item countdown ${cdClass}" data-cd="${l.id}"><i data-lucide="timer" style="width:14px;height:14px"></i><span>${cdText}</span></div></div>
+          <div class="food-card-addr"><i data-lucide="map-pin" style="width:12px;height:12px;flex-shrink:0"></i>${l.addr}</div>
+          <div class="food-card-actions">
+            ${l.claimed?`<button class="btn-claim claimed" onclick="openGps(${l.id})"><i data-lucide="navigation" style="width:14px;height:14px"></i>GPS Route</button>`:exp?'<button class="btn-claim" disabled>Expired</button>':`<button class="btn-claim" onclick="claim(${l.id})"><i data-lucide="hand" style="width:14px;height:14px"></i>Claim Pickup</button>`}
+            <button class="food-card-map-btn" onclick="openGps(${l.id})" title="View map"><i data-lucide="map" style="width:16px;height:16px"></i></button>
+          </div>
+        </div>`;
+      }).join('');
+      lucide.createIcons({nodes:[grid]});
+    }
+
+    function tickCountdowns() {
+      listings.forEach(l=>{
+        if(l.claimed) return;
+        const el=document.querySelector(`[data-cd="${l.id}"]`);
+        if(!el) return;
+        const ms=rem(l),span=el.querySelector('span');
+        if(ms<=0){span.textContent='EXPIRED';el.className='food-card-info-item countdown expired';}
+        else if(ms<5400000){span.textContent=fmtTime(ms);el.className='food-card-info-item countdown urgent';}
+        else{span.textContent=fmtTime(ms);el.className='food-card-info-item countdown normal';}
+      });
+      stats();
+    }
+
+    function claim(id) {
+      const l=listings.find(x=>x.id===id); if(!l||l.claimed) return;
+      l.claimed=true;
+      const ngo=NGOS[Math.floor(Math.random()*NGOS.length)];
+      l.ngo=ngo; l.route=ROUTES[0];
+      mealsKg+=l.unit==='kg'?l.qty:Math.round(l.qty*0.3);
+      co2Kg+=Math.round((l.unit==='kg'?l.qty:l.qty*0.3)*2.5);
+      addDispatch(l); render(); stats();
+      toast(`"${l.item}" claimed by ${ngo.name}!`,'success');
+      setTimeout(()=>{l.route=ROUTES[1];updDispatch(l);},5000+Math.random()*5000);
+      setTimeout(()=>{l.route=ROUTES[2];updDispatch(l);toast(`"${l.item}" delivered!`,'success');},15000+Math.random()*10000);
+    }
+
+    function addDispatch(l) {
+      document.getElementById('dispatch-empty-row')?.remove();
+      const tr=document.createElement('tr'); tr.id=`d-${l.id}`; tr.className='anim-up';
+      tr.innerHTML=`<td><span class="dispatch-batch">#RF-${l.id}</span></td><td><div class="dispatch-food-title">${l.item}</div><div class="dispatch-food-sub">${l.rest} · ${l.qty} ${l.unit}</div></td><td class="hide-mobile"><div class="dispatch-name">${l.ngo.vol}</div><div class="dispatch-org">${l.ngo.name}</div></td><td class="hide-tablet dispatch-vehicle">${l.ngo.vehicle}</td><td class="dispatch-status" id="ds-${l.id}">${l.route}</td><td style="text-align:center"><button class="btn-qr" onclick="openQr(${l.id})"><i data-lucide="qr-code" style="width:12px;height:12px"></i>Pass</button></td>`;
+      document.getElementById('dispatch-tbody').prepend(tr);
+      lucide.createIcons({nodes:[tr]});
+    }
+    function updDispatch(l) { const el=document.getElementById(`ds-${l.id}`); if(el) el.textContent=l.route; }
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      const id=++batchId, exp=parseFloat(document.getElementById('f-expiry').value);
+      const name=document.getElementById('f-item').value.trim();
+      listings.unshift({ id, rest:document.getElementById('f-restaurant').value.trim(), item:name, qty:parseFloat(document.getElementById('f-qty').value), unit:document.getElementById('f-unit').value, cat:document.getElementById('f-category').value, addr:document.getElementById('f-address').value.trim(), ph:document.getElementById('f-phone').value.trim(), created:Date.now(), expiryMs:exp*3600000, claimed:false, ngo:null, route:null });
+      document.getElementById('donor-form').reset(); document.getElementById('f-expiry').value='3';
+      render(); stats(); toast(`"${name}" listed successfully!`,'success');
+      const fs=document.getElementById('form-success'); fs.classList.add('show'); setTimeout(()=>fs.classList.remove('show'),3500);
+      document.getElementById('feed-section').scrollIntoView({behavior:'smooth'});
+      return false;
+    }
+
+    function openGps(id) {
+      const l=listings.find(x=>x.id===id); if(!l) return;
+      const dest=l.ngo?l.ngo.name+' Collection Hub':'Nearest NGO Hub';
+      const destAddr=ADDRS[Math.floor(Math.random()*ADDRS.length)];
+      const eta=Math.floor(5+Math.random()*15), dist=(1+Math.random()*7).toFixed(1);
+      document.getElementById('gps-modal-body').innerHTML=`
+        <div class="glass" style="border-radius:var(--radius-md);padding:18px">
+          <div class="route-visual"><div class="route-line"><div class="route-dot pickup"></div><div class="route-stem"></div><div class="route-dot drop"></div></div><div class="route-points"><div><div class="route-label pickup">Pickup</div><div class="route-place">${l.rest}</div><div class="route-addr">${l.addr}</div></div><div><div class="route-label drop">Destination</div><div class="route-place">${dest}</div><div class="route-addr">${destAddr}</div></div></div></div>
+        </div>
+        <div class="map-sim">
+          <svg viewBox="0 0 440 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            ${Array.from({length:23},(_,i)=>`<line x1="${i*20}" y1="0" x2="${i*20}" y2="200" stroke="rgba(16,185,129,0.08)" stroke-width="0.5"/>`).join('')}
+            ${Array.from({length:11},(_,i)=>`<line x1="0" y1="${i*20}" x2="440" y2="${i*20}" stroke="rgba(16,185,129,0.08)" stroke-width="0.5"/>`).join('')}
+            <rect x="160" y="60" width="50" height="35" rx="3" fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.15)" stroke-width="0.5"/>
+            <rect x="270" y="90" width="60" height="25" rx="3" fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.15)" stroke-width="0.5"/>
+            <rect x="80" y="120" width="40" height="30" rx="3" fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.15)" stroke-width="0.5"/>
+            <path d="M50 170 Q130 140 200 110 Q270 80 340 55 L395 40" stroke="rgba(16,185,129,0.2)" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <path d="M50 170 Q130 140 200 110 Q270 80 340 55 L395 40" stroke="var(--emerald-500)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="6 4"/>
+            <circle cx="50" cy="170" r="12" fill="rgba(16,185,129,0.15)"><animate attributeName="r" values="10;16;10" dur="2.5s" repeatCount="indefinite"/></circle>
+            <circle cx="50" cy="170" r="5" fill="var(--emerald-500)"/>
+            <text x="50" y="192" text-anchor="middle" fill="var(--emerald-700)" font-size="7" font-weight="700" font-family="Inter">PICKUP</text>
+            <circle cx="395" cy="40" r="12" fill="rgba(251,191,36,0.15)"><animate attributeName="r" values="10;16;10" dur="2.5s" repeatCount="indefinite"/></circle>
+            <circle cx="395" cy="40" r="5" fill="var(--amber-500)"/>
+            <text x="395" y="28" text-anchor="middle" fill="var(--amber-600)" font-size="7" font-weight="700" font-family="Inter">DROP</text>
+            <circle r="4" fill="var(--emerald-700)" opacity="0.9"><animateMotion dur="3.5s" repeatCount="indefinite" path="M50 170 Q130 140 200 110 Q270 80 340 55 L395 40"/></circle>
+          </svg>
+          <div class="map-overlay glass" style="border-radius:var(--radius-sm)"><span style="color:var(--text-muted)">ETA:</span> <span class="map-stat-val emerald">${eta} min</span><span style="color:var(--text-faint);margin:0 6px">|</span><span style="color:var(--text-muted)">Dist:</span> <span class="map-stat-val" style="color:var(--text-primary)">${dist} km</span></div>
+        </div>
+        <div class="route-stats"><div class="route-stat-card"><div class="route-stat-label">Status</div><div class="route-stat-value" style="color:var(--emerald-600)">${l.route||'🟡 Pending'}</div></div><div class="route-stat-card"><div class="route-stat-label">Batch</div><div class="route-stat-value" style="font-family:'JetBrains Mono',monospace">#RF-${l.id}</div></div><div class="route-stat-card"><div class="route-stat-label">Volume</div><div class="route-stat-value">${l.qty} ${l.unit}</div></div></div>`;
+      openModal('gps-modal');
+    }
+
+    function genQR() {
+      const s=21; let cells='';
+      for(let r=0;r<s;r++) for(let c=0;c<s;c++){
+        const corner=(r<7&&c<7)||(r<7&&c>=s-7)||(r>=s-7&&c<7);
+        const inner=(r>=2&&r<=4&&c>=2&&c<=4)||(r>=2&&r<=4&&c>=s-5&&c<=s-3)||(r>=s-5&&r<=s-3&&c>=2&&c<=4);
+        const border=corner&&(r===0||r===6||c===0||c===6||r===s-1||r===s-7||c===s-1||c===s-7);
+        const on=corner?(border||inner):Math.random()>0.48;
+        cells+=`<div class="qr-cell" style="background:${on?'var(--emerald-700)':'transparent'}"></div>`;
+      }
+      return cells;
+    }
+    function openQr(id) {
+      const l=listings.find(x=>x.id===id); if(!l) return;
+      const pid=`VP-${Date.now().toString(36).toUpperCase().slice(-6)}-${l.id}`;
+      const ts=new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+      document.getElementById('qr-modal-body').innerHTML=`
+        <div class="qr-container"><div class="qr-frame"><div class="qr-grid">${genQR()}</div></div><div class="qr-pass-label">Verification Pass ID</div><div class="qr-pass-id">${pid}</div></div>
+        <div class="qr-details">
+          <div class="qr-detail"><div class="qr-detail-label">Batch</div><div class="qr-detail-value" style="font-family:'JetBrains Mono',monospace;color:var(--emerald-700)">#RF-${l.id}</div></div>
+          <div class="qr-detail"><div class="qr-detail-label">Food Item</div><div class="qr-detail-value">${l.item}</div></div>
+          <div class="qr-detail"><div class="qr-detail-label">Volunteer</div><div class="qr-detail-value">${l.ngo?.vol||'N/A'}</div></div>
+          <div class="qr-detail"><div class="qr-detail-label">NGO</div><div class="qr-detail-value">${l.ngo?.name||'N/A'}</div></div>
+          <div class="qr-detail full"><div class="qr-detail-label">Issued At</div><div class="qr-detail-value">${ts}</div></div>
+        </div>
+        <div class="qr-verified"><i data-lucide="shield-check" style="width:16px;height:16px"></i>Digitally verified — present this pass at pickup point</div>`;
+      openModal('qr-modal');
+      lucide.createIcons({nodes:[document.getElementById('qr-modal-body')]});
+    }
+
+    function openModal(id){const m=document.getElementById(id);m.classList.add('open');m.querySelector('.modal').classList.add('open');}
+    function closeModal(id){const m=document.getElementById(id);m.classList.remove('open');m.querySelector('.modal').classList.remove('open');}
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('gps-modal');closeModal('qr-modal');}});
+
+    function toast(msg,type='success'){
+      const c=document.getElementById('toast-container'),t=document.createElement('div');
+      t.className=`toast glass-strong ${type}`;
+      const ico=type==='success'?'check-circle':'alert-triangle';
+      t.innerHTML=`<i data-lucide="${ico}" style="width:16px;height:16px"></i><span>${msg}</span>`;
+      c.appendChild(t); lucide.createIcons({nodes:[t]});
+      setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(30px)';setTimeout(()=>t.remove(),300);},3500);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
